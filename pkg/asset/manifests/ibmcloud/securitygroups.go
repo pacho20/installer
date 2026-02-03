@@ -101,7 +101,7 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 				// Outbound for cluster-wide
 				Action: capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Destination: &capibmcloud.VPCSecurityGroupRulePrototype{
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolAll,
+					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolIcmpTCPUDP,
 					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
 						{
 							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
