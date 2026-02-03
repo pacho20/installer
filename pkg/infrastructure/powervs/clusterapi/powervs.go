@@ -228,7 +228,7 @@ func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReady
 
 	for _, existingRule := range existingRules.Rules {
 		switch reflect.TypeOf(existingRule).String() {
-		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
+		case "*vpcv1.SecurityGroupRuleProtocolIcmptcpudp":
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
 			securityGroupRule, ok := existingRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 			if !ok {
@@ -244,6 +244,8 @@ func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReady
 				foundPorts.Insert(*securityGroupRule.PortMin)
 			}
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
+		case "*vpcv1.SecurityGroupRuleProtocolAny":
+		case "*vpcv1.SecurityGroupRuleProtocolIndividual":
 		}
 	}
 
