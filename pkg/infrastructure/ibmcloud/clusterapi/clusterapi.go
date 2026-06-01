@@ -273,6 +273,33 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		logrus.Debug("dns record created for load balancer", "hostName", *lbDetails.Hostname)
 	}
 
+	// Ensure the VPC's default security group allows inbound TCP on 80 and 443 from
+	// anywhere, which the ingress controller needs once the cluster is up. Fetch the
+	// SG once and reuse the rules slice for both existence checks.
+	vpc, err := client.GetVPC(ctx, ibmcloudCluster.Status.Network.VPC.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get vpc: %w", err)
+	}
+	if vpc.DefaultSecurityGroup == nil || vpc.DefaultSecurityGroup.ID == nil {
+		return fmt.Errorf("failed to get default security group for vpc: %s", ibmcloudCluster.Status.Network.VPC.ID)
+	}
+	defaultSGID := *vpc.DefaultSecurityGroup.ID
+	defaultSG, err := client.GetSecurityGroupByID(ctx, defaultSGID, metadata.Region)
+	if err != nil {
+		return fmt.Errorf("failed to get default security group %s: %w", defaultSGID, err)
+	}
+	const ingressCIDR = "0.0.0.0/0"
+	for _, port := range []int64{80, 443} {
+		if ibmcloudic.HasTCPIngressRule(defaultSG.Rules, port, ingressCIDR) {
+			logrus.Debugf("default security group %s already allows inbound tcp port %d from %s", defaultSGID, port, ingressCIDR)
+			continue
+		}
+		if _, err := client.CreateSecurityGroupRule(ctx, defaultSGID, metadata.Region, ibmcloudic.NewTCPIngressRulePrototype(port, ingressCIDR)); err != nil {
+			return fmt.Errorf("failed to add inbound tcp port %d rule to default security group %s: %w", port, defaultSGID, err)
+		}
+		logrus.Infof("added inbound tcp port %d rule to default security group %s", port, defaultSGID)
+	}
+
 	logrus.Debug("checking cluster publishing strategy", "publish", in.InstallConfig.Config.Publish)
 	// For Private/Internal cluster, check DNS Services Zone's Permitted Network.
 	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
