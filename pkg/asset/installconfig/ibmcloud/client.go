@@ -49,6 +49,7 @@ type API interface {
 	CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID string, dnsZoneID string, vpcCRN string) error
 	CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error
 	CreateResourceGroup(ctx context.Context, rgName string) error
+	CreateSecurityGroupRule(ctx context.Context, sgID string, region string, prototype vpcv1.SecurityGroupRulePrototypeIntf) (vpcv1.SecurityGroupRuleIntf, error)
 	DeleteCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
 	DeleteCOSInstance(ctx context.Context, cosInstanceID string) error
 	DeleteCOSObject(ctx context.Context, cosInstanceID string, bucketName string, objectKey string, region string) error
@@ -73,6 +74,7 @@ type API interface {
 	GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
+	GetSecurityGroupByID(ctx context.Context, sgID string, region string) (*vpcv1.SecurityGroup, error)
 	GetSecurityGroupByName(ctx context.Context, sgName string, vpcID string, region string) (*vpcv1.SecurityGroup, error)
 	GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
@@ -1103,6 +1105,42 @@ func (c *Client) GetSecurityGroupByName(ctx context.Context, sgName string, vpcI
 	}
 
 	return nil, &VPCResourceNotFoundError{}
+}
+
+// GetSecurityGroupByID gets a Security Group by its ID, within the specified Region.
+func (c *Client) GetSecurityGroupByID(ctx context.Context, sgID string, region string) (*vpcv1.SecurityGroup, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed setting vpc service region for security group lookup: %w", err)
+	}
+
+	getSecurityGroupOptions := c.vpcAPI.NewGetSecurityGroupOptions(sgID)
+	securityGroup, _, err := c.vpcAPI.GetSecurityGroupWithContext(localContext, getSecurityGroupOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting security group: %w", err)
+	}
+
+	return securityGroup, nil
+}
+
+// CreateSecurityGroupRule creates a single rule on the specified Security Group in the given Region.
+func (c *Client) CreateSecurityGroupRule(ctx context.Context, sgID string, region string, prototype vpcv1.SecurityGroupRulePrototypeIntf) (vpcv1.SecurityGroupRuleIntf, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed setting vpc service region for security group rule creation: %w", err)
+	}
+
+	options := c.vpcAPI.NewCreateSecurityGroupRuleOptions(sgID, prototype)
+	rule, _, err := c.vpcAPI.CreateSecurityGroupRuleWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating security group rule: %w", err)
+	}
+	return rule, nil
 }
 
 // GetSSHKeyByPublicKey gets an SSH Key by its public key.

@@ -176,6 +176,21 @@ func (mr *MockAPIMockRecorder) CreateResourceGroup(ctx, rgName any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateResourceGroup", reflect.TypeOf((*MockAPI)(nil).CreateResourceGroup), ctx, rgName)
 }
 
+// CreateSecurityGroupRule mocks base method.
+func (m *MockAPI) CreateSecurityGroupRule(ctx context.Context, sgID, region string, prototype vpcv1.SecurityGroupRulePrototypeIntf) (vpcv1.SecurityGroupRuleIntf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSecurityGroupRule", ctx, sgID, region, prototype)
+	ret0, _ := ret[0].(vpcv1.SecurityGroupRuleIntf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSecurityGroupRule indicates an expected call of CreateSecurityGroupRule.
+func (mr *MockAPIMockRecorder) CreateSecurityGroupRule(ctx, sgID, region, prototype any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSecurityGroupRule", reflect.TypeOf((*MockAPI)(nil).CreateSecurityGroupRule), ctx, sgID, region, prototype)
+}
+
 // DeleteCOSBucket mocks base method.
 func (m *MockAPI) DeleteCOSBucket(ctx context.Context, cosInstanceID, bucketName, region string) error {
 	m.ctrl.T.Helper()
@@ -542,6 +557,21 @@ func (m *MockAPI) GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*
 func (mr *MockAPIMockRecorder) GetSSHKeyByPublicKey(ctx, publicKey any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSSHKeyByPublicKey", reflect.TypeOf((*MockAPI)(nil).GetSSHKeyByPublicKey), ctx, publicKey)
+}
+
+// GetSecurityGroupByID mocks base method.
+func (m *MockAPI) GetSecurityGroupByID(ctx context.Context, sgID, region string) (*vpcv1.SecurityGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecurityGroupByID", ctx, sgID, region)
+	ret0, _ := ret[0].(*vpcv1.SecurityGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecurityGroupByID indicates an expected call of GetSecurityGroupByID.
+func (mr *MockAPIMockRecorder) GetSecurityGroupByID(ctx, sgID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecurityGroupByID", reflect.TypeOf((*MockAPI)(nil).GetSecurityGroupByID), ctx, sgID, region)
 }
 
 // GetSecurityGroupByName mocks base method.
